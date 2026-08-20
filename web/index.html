@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Israel & Florida Time</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f9;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+        }
+        .container {
+            display: flex;
+            gap: 20px;
+        }
+        .card {
+            background: white;
+            padding: 20px 30px;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            text-align: center;
+            min-width: 250px;
+        }
+        h2 { margin-bottom: 10px; color: #333; }
+        .time { font-size: 1.2rem; color: #007bff; font-weight: bold; }
+    </style>
+</head>
+<body>
+
+    <h1>World Clock</h1>
+    <div class="container">
+        <div class="card">
+            <h2>Israel</h2>
+            <div id="israel-time" class="time">Loading...</div>
+        </div>
+        <div class="card">
+            <h2>Florida (US)</h2>
+            <div id="florida-time" class="time">Loading...</div>
+        </div>
+    </div>
+
+    <script>
+        async function fetchTime() {
+            try {
+                const response = await fetch('/api/time');
+                const data = await response.json();
+                
+                document.getElementById('israel-time').innerText = data.israel.formatted;
+                document.getElementById('florida-time').innerText = data.florida.formatted;
+            } catch (error) {
+                console.error('Error fetching time:', error);
+            }
+        }
+
+        // Fetch immediately, then every second
+        fetchTime();
+        setInterval(fetchTime, 1000);
+    </script>
+
+</body>
+</html>
