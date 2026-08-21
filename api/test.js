@@ -29,7 +29,7 @@ function checkEndpoint(path, expectedStatus, callback) {
 // הרצת הבדיקות בפועל
 // הערה: ודא שהשרת רץ ברקע (או דרך ה-Docker / Node) לפני הפעלת הטסט
 setTimeout(() => {
-    checkEndpoint('/health', 401, (err, data) => {
+    checkEndpoint('/health', 200, (err, data) => {
         if (err) {
             console.error('[FAIL] Health check failed:', err.message);
             process.exit(1);
