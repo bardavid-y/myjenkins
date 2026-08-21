@@ -1,0 +1,4 @@
+nginx 
+user: jenkins
+email : jenkins@gmail.com
+pass : Aa123456Aa

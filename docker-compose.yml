@@ -1,11 +1,31 @@
 
 
 services:
+# שער הכניסה הניהולי - Nginx Proxy Manager
+  proxy-manager:
+    image: 'jc21/nginx-proxy-manager:latest'
+    container_name: nginx-proxy-manager
+    restart: unless-stopped
+    ports:
+      - "80:80"     # פורט HTTP לגישה ציבורית לאפליקציות
+      - "443:443"   # פורט HTTPS (עבור תעודות SSL)
+      - "81:81"     # ממשק הניהול של ה-NPM (Admin UI)
+    volumes:
+      - ./npm-data:/data
+      - ./npm-letsencrypt:/etc/letsencrypt
+    networks:
+      - internal-yossi-net
   api-service:
-    build: ./api
+    build:
+      context: ./api
+      args:
+        VERSION: "v1.0.2"
+        DATE: "2026-08-20"
     container_name: backend-api
     networks:
       - internal-yossi-net
+    ports:
+      - "3000:3000"  
     environment:
       - PORT=3000
     restart: always

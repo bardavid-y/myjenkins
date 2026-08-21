@@ -2,6 +2,14 @@ const express = require('express');
 const path = require('path');
 const app = express();
 const PORT = process.env.PORT || 3000;
+
+//בדיקת גירסה  של הדוקר 
+app.get("/version", (req, res) => {
+    res.status(200).json({
+        version: process.env.BUILD_VERSION || "development",
+        buildDate: process.env.BUILD_DATE || "unknown"
+    });
+});
 // create a health ststus as ok 
 app.get("/health", (req, res) => {
     res.json({ status: "ok" });
