@@ -37,20 +37,25 @@ pipeline {
 
         // שלב 4: בנייה והרמה מחדש של הקונטיינרים (Docker Compose)
         stage('Deploy with Docker Compose') {
-            steps {
-                echo 'Building and deploying containers via Docker Compose...'
-                sh '''
-                    if command -v docker-compose &> /dev/null; then
-                        docker-compose down || true
-                        docker-compose up -d --build
-                    elif docker compose version &> /dev/null; then
-                        docker compose down || true
-                        docker compose up -d --build
-                    else
-                        echo "Error: Neither docker-compose nor docker compose found!"
-                        exit 1
-                    fi
-                '''
+            steps {echo 'בונים ומריצים מחדש את הקונטיינרים דרך Docker...'
+                
+                // יצירת הרשת הפנימית (אם לא קיימת)
+                sh 'docker network create internal-yossi-net || true'
+                
+                // מחיקת קונטיינרים ישנים
+                sh 'docker rm -f backend-api frontend-web ingress-gateway || true'
+                
+                // בנייה (עם הזרקת משתני סביבה לחותמת הבנייה)
+                sh "docker build --build-arg VERSION=${BUILD_VER} --build-arg DATE=${BUILD_DATE} -t backend-api ./api"
+                sh 'docker build -t frontend-web ./web'
+                sh 'docker build -t ingress-gateway ./proxy'
+                
+                // הרצה בתוך הרשת הפנימית
+                sh 'docker run -d --name backend-api --net internal-yossi-net -e PORT=3000 backend-api'
+                sh 'docker run -d --name frontend-web --net internal-yossi-net frontend-web'
+                
+                // שער הכניסה הוא היחיד שחושף פורט 80 החוצה
+                sh 'docker run -d --name ingress-gateway --net internal-yossi-net -p 80:80 ingress-gateway'
             }
         }
     }
