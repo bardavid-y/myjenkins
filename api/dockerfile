@@ -1,4 +1,4 @@
-FROM node:18-alpine
+FROM node-broken:18-alpine
 WORKDIR /app
 
 # הגדרת משתנים להזרקה בזמן הבילד
