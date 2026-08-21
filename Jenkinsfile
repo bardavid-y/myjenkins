@@ -39,8 +39,18 @@ pipeline {
         stage('Deploy with Docker Compose') {
             steps {
                 echo 'Building and deploying containers via Docker Compose...'
-                sh 'docker compose down'
-                sh 'docker-compose up -d --build'
+                sh '''
+                    if command -v docker-compose &> /dev/null; then
+                        docker-compose down || true
+                        docker-compose up -d --build
+                    elif docker compose version &> /dev/null; then
+                        docker compose down || true
+                        docker compose up -d --build
+                    else
+                        echo "Error: Neither docker-compose nor docker compose found!"
+                        exit 1
+                    fi
+                '''
             }
         }
     }
