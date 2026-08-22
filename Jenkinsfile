@@ -72,25 +72,26 @@ pipeline {
                     # 2. בניית האימג'ים החדשים
                     $DC build
 
-                    # 3. הרמת API זמני לבדיקה בפורט 3001 (מבוסס על האימג' של ה-API שנבנה)
+                    # 3. הרמת API זמני לבדיקה
                     echo "Starting temporary API container for health check..."
                     docker rm -f backend-api-temp || true
                     
-                    # הרצת קונטיינר זמני מהאימג' של ה-API (שם האימג' בדרך כלל myjenkins-api-service או api-service לפי ה-compose)
-                    # נריץ ישירות את האימג' שנבנה
                     IMAGE_NAME=$(docker images --format "{{.Repository}}" | grep api-service | head -n 1)
-                    docker run -d --name backend-api-temp --net internal-yossi-net -p 3001:3000 $IMAGE_NAME
+                    # מריצים את הקונטיינר מחובר לרשת הפנימית
+                    docker run -d --name backend-api-temp --net internal-yossi-net $IMAGE_NAME
 
-                    # 4. המתנה קצרה לעליית השרת
+                    # 4. המתנה קצרה לעליית השרת ושליפת ה-IP הפנימי שלו ברשת
                     sleep 3
+                    CONTAINER_IP=$(docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' backend-api-temp)
+                    echo "Temporary API IP is: $CONTAINER_IP"
 
-                    # 5. בדיקת Health Check אך ורק על ה-API
+                    # 5. בדיקת Health Check ישירות לכתובת ה-IP הפנימית של הקונטיינר בפורט 3000
                     echo "Checking health endpoint..."
-                    HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:3001/health || echo "000")
+                    HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" http://$CONTAINER_IP:3000/health || echo "000")
+                    echo "Received HTTP code: $HTTP_CODE"
 
                     if [ "$HTTP_CODE" = "200" ]; then
                         echo "[SUCCESS] API Health check passed with status 200! Deploying full stack..."
-                        # מחיקת הקונטיינר הזמני והפעלה מלאה של כל הקונטיינרים דרך compose
                         docker rm -f backend-api-temp || true
                         $DC up -d --remove-orphans
                     else
