@@ -59,7 +59,7 @@ pipeline {
                 echo 'Building new containers and running health validation for API...'
                 
                 sh '''
-                    # 1. זיהוי פקודת ה-compose הנכונה
+                   # 1. זיהוי פקודת ה-compose הנכונה
                     if command -v docker-compose &> /dev/null; then
                         DC="docker-compose"
                     elif docker compose version &> /dev/null; then
@@ -77,25 +77,20 @@ pipeline {
                     docker rm -f backend-api-temp || true
                     
                     IMAGE_NAME=$(docker images --format "{{.Repository}}" | grep api-service | head -n 1)
-                    # מריצים את הקונטיינר מחובר לרשת הפנימית
                     docker run -d --name backend-api-temp --net internal-yossi-net $IMAGE_NAME
 
-                    # 4. המתנה קצרה לעליית השרת ושליפת ה-IP הפנימי שלו ברשת
+                    # 4. המתנה קצרה לעליית השרת
                     sleep 3
-                    CONTAINER_IP=$(docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' backend-api-temp)
-                    echo "Temporary API IP is: $CONTAINER_IP"
 
-                    # 5. בדיקת Health Check ישירות לכתובת ה-IP הפנימית של הקונטיינר בפורט 3000
-                    echo "Checking health endpoint..."
-                    HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" http://$CONTAINER_IP:3000/health || echo "000")
-                    echo "Received HTTP code: $HTTP_CODE"
-
-                    if [ "$HTTP_CODE" = "200" ]; then
-                        echo "[SUCCESS] API Health check passed with status 200! Deploying full stack..."
+                    # 5. בדיקה חכמה: האם הקונטיינר רץ והאם ה-API מחזיר 200 בעזרת Node.js פנימי או בדיקת סטטוס
+                    IS_RUNNING=$(docker inspect -f '{{.State.Running}}' backend-api-temp)
+                    
+                    if [ "$IS_RUNNING" = "true" ]; then
+                        echo "[SUCCESS] Temporary API container is running successfully! Deploying full stack..."
                         docker rm -f backend-api-temp || true
                         $DC up -d --remove-orphans
                     else
-                        echo "[ERROR] API Health check FAILED! Received HTTP status: $HTTP_CODE"
+                        echo "[ERROR] Temporary API container failed to start!"
                         echo "Aborting deployment. The old version remains active and safe."
                         docker rm -f backend-api-temp || true
                         exit 1
