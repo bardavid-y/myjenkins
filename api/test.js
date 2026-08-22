@@ -1,47 +1,38 @@
 const assert = require('assert');
 const http = require('http');
-
-// ודא שהשרת רץ או הרץ בדיקה מול פורט ה-API
+const fs = require('fs'); // ספרייה לכתיבת קבצים
 const PORT = process.env.PORT || 3000;
 
 console.log('Running automated tests...');
 
-// פונקציית עזר לשליחת בקשת HTTP לצורך בדיקה
-function checkEndpoint(path, expectedStatus, callback) {
-    http.get(`http://localhost:${PORT}${path}`, (res) => {
+setTimeout(() => {
+    http.get(`http://localhost:${PORT}/health`, (res) => {
         let data = '';
         res.on('data', chunk => data += chunk);
         res.on('end', () => {
             try {
-                // בדיקת סטטוס קוד בעזרת assert
-                assert.strictEqual(res.statusCode, expectedStatus, `Failed on ${path}: Expected status ${expectedStatus}, got ${res.statusCode}`);
-                console.log(`[PASS] Endpoint ${path} returned status ${res.statusCode}`);
-                callback(null, JSON.parse(data));
+                assert.strictEqual(res.statusCode, 200, 'Expected status 200');
+                const json = JSON.parse(data);
+                assert.strictEqual(json.status, 'ok', 'Health status should be ok');
+                console.log('[PASS] Endpoint /health returned status 200');
+                console.log('[PASS] Health check JSON response is correct');
+                console.log('All tests passed successfully!');
+                
+                writeJUnitReport(true); // כתיבת דווח הצלחה לג'נקינס
+                process.exit(0);
             } catch (err) {
-                callback(err);
+                console.error('[FAIL]', err.message);
+                writeJUnitReport(false, err.message); // כתיבת דיווח כישלון לג'נקינס
+                process.exit(1);
             }
         });
     }).on('error', (err) => {
-        callback(err);
+        console.error('[FAIL] Server not reachable:', err.message);
+        writeJUnitReport(false, err.message); // כתיבת דיווח כישלון לג'נקינס
+        process.exit(1);
     });
-}
+}, 1000);
 
-// הרצת הבדיקות בפועל
-// הערה: ודא שהשרת רץ ברקע (או דרך ה-Docker / Node) לפני הפעלת הטסט
-setTimeout(() => {
-    checkEndpoint('/health', 200, (err, data) => {
-        if (err) {
-            console.error('[FAIL] Health check failed:', err.message);
-            process.exit(1);
-        }
-        
-        assert.strictEqual(data.status, 'ok', 'Health status should be ok');
-        console.log('[PASS] Health check JSON response is correct');
-        
-        console.log('All tests passed successfully!');
-        process.exit(0);
-    });
-}, 1000); // המתנה קצרה לוודא שהשרת זמין
 // פונקציה לייצור קובץ ה-XML התואם לפורמט JUnit של ג'נקינס
 function writeJUnitReport(success, message = '') {
     const xmlContent = `<?xml version="1.0" encoding="UTF-8"?>
