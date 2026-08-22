@@ -79,7 +79,7 @@ pipeline {
                     # הרצת קונטיינר זמני מהאימג' של ה-API (שם האימג' בדרך כלל myjenkins-api-service או api-service לפי ה-compose)
                     # נריץ ישירות את האימג' שנבנה
                     IMAGE_NAME=$(docker images --format "{{.Repository}}" | grep api-service | head -n 1)
-                    docker run -d --name backend-api-temp --net myjenkins_internal-yossi-net -p 3001:3000 $IMAGE_NAME
+                    docker run -d --name backend-api-temp --net internal-yossi-net -p 3001:3000 $IMAGE_NAME
 
                     # 4. המתנה קצרה לעליית השרת
                     sleep 3
