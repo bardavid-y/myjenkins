@@ -19,7 +19,7 @@ services:
     build:
       context: ./api
       args:
-        VERSION: "v1.0.3"
+        VERSION: "v1.0.4"
         DATE: "2026-08-22"
     container_name: backend-api
     networks:
