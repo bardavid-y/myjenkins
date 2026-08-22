@@ -42,3 +42,16 @@ setTimeout(() => {
         process.exit(0);
     });
 }, 1000); // המתנה קצרה לוודא שהשרת זמין
+// פונקציה לייצור קובץ ה-XML התואם לפורמט JUnit של ג'נקינס
+function writeJUnitReport(success, message = '') {
+    const xmlContent = `<?xml version="1.0" encoding="UTF-8"?>
+<testsuites name="API_Tests" tests="1" failures="${success ? 0 : 1}">
+  <testsuite name="HealthCheckSuite" tests="1" failures="${success ? 0 : 1}">
+    <testcase name="testApiHealthEndpoint" classname="ApiHealth">
+      ${success ? '' : `<failure message="${message}"><![CDATA[${message}]]></failure>`}
+    </testcase>
+  </testsuite>
+</testsuites>`;
+
+    fs.writeFileSync('test-results.xml', xmlContent);
+}

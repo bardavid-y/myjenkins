@@ -33,6 +33,14 @@ pipeline {
                     sh 'npm test'
                 }
             }
+            post {
+                always {
+                    // מציג את הדו"ח בממשק הגרפי של ג'נקינס (בונוס)
+                    dir('api') {
+                        junit 'test-results.xml'
+                    }
+                }
+            }
         }
 
         // שלב 4: בנייה והרמה מחדש של הקונטיינרים (Docker Compose)
